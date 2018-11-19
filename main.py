@@ -7,22 +7,33 @@ from PIL import Image
 from sklearn.decomposition import PCA
 
 
-def plot_gallery(images, titles, eigenvalues, h, w, face, faceTitle, n_row=2, n_col=3):
-    plt.figure(figsize=(1.8 * n_col, 2.4 * n_row))
+def plot_gallery(images, titles, eigenvalues, meanface, reconstruct, residual, h, w, n_row=2, n_col=3):
+    plt.figure(figsize=(1.8 * n_col, 2.2 * (n_row + 1)))
+    plt.suptitle("K = " + str(n_row*n_col), va='bottom', ha='right', x=0.85, y=(1-n_row/(n_row+1))/2.5, size=36)
     plt.subplots_adjust(bottom=0, left=.01, right=.99, top=.90, hspace=.35)
     for i in range(n_row * n_col):
-        if i == 5:
-            plt.subplot(n_row, n_col, i + 1)
-            plt.imshow(face.reshape((h, w)), cmap=plt.cm.gray)
-            plt.title(faceTitle, size=12)
-            plt.xticks(())
-            plt.yticks(())
-            return
-        plt.subplot(n_row, n_col, i + 1)
+        plt.subplot((n_row + 1), n_col, i + 1)
         plt.imshow(images[i].reshape((h, w)), cmap=plt.cm.gray)
         plt.title(titles[i]+'\n'+str("{0:.2f}".format(eigenvalues[i])), size=12)
         plt.xticks(())
         plt.yticks(())
+    plt.subplot((n_row + 1), n_col, n_row*n_col+1)
+    plt.imshow(meanface.reshape((h, w)), cmap=plt.cm.gray)
+    plt.title('Mean Face', size=12)
+    plt.xticks(())
+    plt.yticks(())
+
+    plt.subplot((n_row + 1), n_col, n_row * n_col + 2)
+    plt.imshow(reconstruct.reshape((h, w)), cmap=plt.cm.gray)
+    plt.title('Reconstruct', size=12)
+    plt.xticks(())
+    plt.yticks(())
+
+    plt.subplot((n_row + 1), n_col, n_row * n_col + 3)
+    plt.imshow(residual.reshape((h, w)), cmap=plt.cm.gray)
+    plt.title('Residual', size=12)
+    plt.xticks(())
+    plt.yticks(())
 
 
 test_img = Image.open('data/hw03-test.tif')
@@ -69,12 +80,18 @@ for n_components in range(5, 26, 5):
 
     print("done in %0.3fs" % (time() - t0))
     result = []
+
     X_test_pca = pca.transform(X_test)
-    X_test_hat = np.dot(X_test_pca[:, :n_components], pca.components_[:n_components, :])
-    X_test_hat = X_test_hat + eigenmean
+
+    reconstruct = pca.inverse_transform(X_test_pca)
+
+    residual = X_test - reconstruct
+
+    n_row = int(n_components / 5)
+    n_col = 5
 
     # Mean Face = eigenmean
-    plot_gallery(eigenfaces, eigenface_titles, eigenvalues, h, w, eigenmean, 'Mean Face', n_row=2, n_col=3)
+    plot_gallery(eigenfaces, eigenface_titles, eigenvalues, eigenmean, reconstruct, residual, h, w, n_row=n_row, n_col=n_col)
     plt.show()
 
 
